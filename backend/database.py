@@ -33,3 +33,139 @@ def init_db():
 
     conn.commit()
     conn.close()
+
+
+def create_user(email, hashed_password):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO users(
+            email,
+            hashed_password
+        )
+        VALUES (?, ?)
+        """,
+        (email, hashed_password)
+    )
+
+    conn.commit()
+    conn.close()
+
+
+def get_user_by_email(email):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM users
+        WHERE email = ?
+        """,
+        (email,)
+    )
+
+    user = cursor.fetchone()
+
+    conn.close()
+
+    return user 
+
+def create_task(
+        title,
+        description,
+        priority,
+        due_date,
+        owner_email
+):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO tasks(
+            title,
+            description,
+            priority,
+            status,
+            due_date,
+            owner_email
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (
+            title,
+            description,
+            priority,
+            "pending",
+            due_date,
+            owner_email
+        )
+    )
+
+    conn.commit()
+
+    task_id = cursor.lastrowid
+
+    conn.close()
+
+    return task_id
+
+
+def get_all_tasks(owner_email):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM tasks
+        WHERE owner_email = ?
+        """,
+        (owner_email,)
+    )
+
+    tasks = cursor.fetchall()
+
+    conn.close()
+
+    return tasks
+
+
+def get_task_by_id(task_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM tasks
+        WHERE id = ?
+        """,
+        (task_id,)
+    )
+
+    task = cursor.fetchone()
+
+    conn.close()
+
+    return task
+
+
+def delete_task(task_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        DELETE FROM tasks
+        WHERE id = ?
+        """,
+        (task_id,)
+    )
+
+    conn.commit()
+
+    conn.close()
