@@ -169,3 +169,80 @@ def delete_task(task_id):
     conn.commit()
 
     conn.close()
+def update_task(
+        task_id,
+        title,
+        description,
+        priority,
+        status,
+        due_date
+):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        UPDATE tasks
+        SET
+            title = ?,
+            description = ?,
+            priority = ?,
+            status = ?,
+            due_date = ?
+        WHERE id = ?
+        """,
+        (
+            title,
+            description,
+            priority,
+            status,
+            due_date,
+            task_id
+        )
+    )
+
+    conn.commit()
+    conn.close()
+def update_task_status(
+        task_id,
+        status
+):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        UPDATE tasks
+        SET status = ?
+        WHERE id = ?
+        """,
+        (
+            status,
+            task_id
+        )
+    )
+
+    conn.commit()
+    conn.close()
+def get_summary(owner_email):
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT status, COUNT(*) as count
+        FROM tasks
+        WHERE owner_email = ?
+        GROUP BY status
+        """,
+        (owner_email,)
+    )
+
+    summary = cursor.fetchall()
+
+    conn.close()
+
+    return summary
