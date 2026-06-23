@@ -34,6 +34,8 @@ def create_token(email: str):
 def get_current_user(
         token: str = Depends(api_key_header)
 ):
+    if token.startswith("Bearer "):
+        token = token.replace("Bearer ", "")
 
     if token not in sessions:
         raise HTTPException(

@@ -1,7 +1,8 @@
 from pydantic import BaseModel
 
 
-# User Schemas
+# ================= USERS =================
+
 class UserRegister(BaseModel):
     email: str
     password: str
@@ -12,7 +13,8 @@ class UserLogin(BaseModel):
     password: str
 
 
-# Task Schemas
+# ================= TASKS =================
+
 class TaskCreate(BaseModel):
     title: str
     description: str
@@ -40,3 +42,10 @@ class TaskResponse(BaseModel):
     status: str
     due_date: str
     owner_email: str
+
+
+# ================= SUMMARY =================
+
+class SummaryResponse(BaseModel):
+    status: str
+    count: int

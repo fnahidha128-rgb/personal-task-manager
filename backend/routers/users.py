@@ -1,5 +1,4 @@
-from fastapi import APIRouter, HTTPException, Header
-
+from fastapi import APIRouter, HTTPException, Header, Depends
 from schemas import UserRegister, UserLogin
 from database import create_user, get_user_by_email
 from auth import (
@@ -60,10 +59,11 @@ def login(user: UserLogin):
         "token": token
     }
 
-
 @router.get("/me")
-def me(authorization: str = Header(None)):
+def me(
+        current_user: str = Depends(get_current_user)
+):
 
     return {
-        "received_token": authorization
+        "email": current_user
     }
