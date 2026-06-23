@@ -201,6 +201,9 @@ def register_page():
 def dashboard_page():
     st.subheader("Dashboard")
 
+    st.markdown(
+    f"### Welcome back, {st.session_state.email.split('@')[0]} 👋"
+    )
     status, all_tasks_data = api_call("GET", "/tasks")
 
     if status == 200:
@@ -211,6 +214,10 @@ def dashboard_page():
     else:
         total = pending = in_progress = done = 0
 
+    search_text = st.text_input(
+    "🔍 Search Tasks",
+    placeholder="Search by title..."
+    )
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Total", total)
     c2.metric("🟡 Pending", pending)
@@ -233,6 +240,12 @@ def dashboard_page():
 
     status, tasks = api_call("GET", "/tasks", params=params)
 
+    if search_text:
+        tasks = [
+            task for task in tasks
+            if search_text.lower() in task.get("title", "").lower()
+        ]
+    
     if status != 200:
         st.error("Could not load tasks.")
         return
@@ -466,11 +479,12 @@ def profile_page():
     status, data = api_call("GET", "/auth/me")
 
     if status == 200:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.info("👤 User Information")
+
         st.write("**Email:**", data.get("email", st.session_state.email))
         st.write("**Account Status:** Active")
         st.write("**Project:** Personal Task Manager")
-        st.markdown("</div>", unsafe_allow_html=True)
+
     else:
         st.error("Could not load profile.")
 
