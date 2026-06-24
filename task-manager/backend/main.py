@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from database import init_db
-from routers import users, tasks
+from backend.database import init_db
+from backend.routers import users, tasks
 
 app = FastAPI()
 
@@ -11,7 +11,6 @@ def startup():
 
 
 app.include_router(users.router, prefix="/auth", tags=["Auth"])
-
 app.include_router(tasks.router, prefix="/tasks", tags=["Tasks"])
 
 
