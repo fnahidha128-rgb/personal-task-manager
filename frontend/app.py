@@ -97,29 +97,74 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
+
 # ---------------- SIDEBAR ----------------
 with st.sidebar:
-    st.header("Menu")
+    st.markdown("## Task Manager")
+    st.markdown("<br>", unsafe_allow_html=True)
 
     if st.session_state.token:
-        st.success(f"Logged in as\n{st.session_state.email}")
+        st.markdown(f"""
+        <div style="
+            background: #111827;
+            border: 1px solid #374151;
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 25px;
+        ">
+            <div style="font-size: 14px; color: #9ca3af;">Logged in as</div>
+            <div style="font-size: 16px; color: #22c55e; font-weight: 600;">
+                {st.session_state.email}
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
-        menu = st.radio(
-            "Navigation",
-            ["Dashboard", "Add Task", "Profile", "Help"],
-            index=["Dashboard", "Add Task", "Profile", "Help"].index(st.session_state.page)
-            if st.session_state.page in ["Dashboard", "Add Task", "Profile", "Help"] else 0
-        )
-        if st.session_state.page not in ["Edit Task", "Task Details"]:
-            st.session_state.page = menu
-        if st.button("Logout"):
+        st.markdown("### NAVIGATION")
+
+        if st.button("Dashboard", use_container_width=True):
+            st.session_state.page = "Dashboard"
+            st.rerun()
+
+        if st.button("Add Task", use_container_width=True):
+            st.session_state.page = "Add Task"
+            st.rerun()
+
+        if st.button("Profile", use_container_width=True):
+            st.session_state.page = "Profile"
+            st.rerun()
+
+        if st.button(" Help", use_container_width=True):
+            st.session_state.page = "Help"
+            st.rerun()
+
+        st.markdown("---")
+
+        if st.button("Logout", use_container_width=True):
             st.session_state.clear()
             st.rerun()
 
     else:
-        st.warning("Not Logged In")
-        menu = st.radio("Menu", ["Login", "Register"])
-        st.session_state.page = menu
+        st.markdown("""
+        <div style="
+            background: #111827;
+            border: 1px solid #374151;
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 25px;
+        ">
+            <div style="font-size: 15px; color: #facc15;">
+                Not Logged In
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        if st.button("Login", use_container_width=True):
+            st.session_state.page = "Login"
+            st.rerun()
+
+        if st.button("Register", use_container_width=True):
+            st.session_state.page = "Register"
+            st.rerun()
 
 
 # ---------------- HEADER ----------------
@@ -132,7 +177,7 @@ def login_page():
     col1, col2, col3 = st.columns([1, 1.2, 1])
 
     with col2:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
+        
         st.subheader("Login")
 
         with st.form("login_form"):
@@ -158,7 +203,7 @@ def login_page():
                     else:
                         st.error(data.get("detail", "Invalid email or password."))
 
-        st.markdown("</div>", unsafe_allow_html=True)
+        
 
 
 # ---------------- REGISTER ----------------
@@ -166,8 +211,8 @@ def register_page():
     col1, col2, col3 = st.columns([1, 1.2, 1])
 
     with col2:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.subheader("📝 Create Account")
+        
+        st.subheader("Create Account")
 
         with st.form("register_form"):
             email = st.text_input("Email")
@@ -194,7 +239,7 @@ def register_page():
                     else:
                         st.error(data.get("detail", "Registration failed."))
 
-        st.markdown("</div>", unsafe_allow_html=True)
+        
 
 
 # ---------------- DASHBOARD ----------------
@@ -477,17 +522,27 @@ def profile_page():
     st.subheader("Profile")
 
     status, data = api_call("GET", "/auth/me")
+    task_status, tasks = api_call("GET", "/tasks")
 
     if status == 200:
+        total = len(tasks) if task_status == 200 else 0
+        pending = len([t for t in tasks if t.get("status") == "pending"]) if task_status == 200 else 0
+        completed = len([t for t in tasks if t.get("status") == "done"]) if task_status == 200 else 0
+
         st.info("👤 User Information")
 
+        c1, c2, c3 = st.columns(3)
+        c1.metric("📋 Total Tasks", total)
+        c2.metric("⏳ Pending Tasks", pending)
+        c3.metric("✅ Completed Tasks", completed)
+
+        st.markdown("---")
         st.write("**Email:**", data.get("email", st.session_state.email))
         st.write("**Account Status:** Active")
         st.write("**Project:** Personal Task Manager")
 
     else:
         st.error("Could not load profile.")
-
 
 # ---------------- HELP ----------------
 def help_page():
