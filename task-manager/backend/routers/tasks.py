@@ -1,38 +1,200 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
 
+from schemas import TaskCreate, TaskUpdate, TaskStatus
+from database import (
+    create_task,
+    get_all_tasks,
+    get_task_titles,
+    get_task_by_id,
+    delete_task,
+    update_task,
+    update_task_status,
+    get_summary,
+    get_total_tasks,
+    get_pending_tasks,
+    get_completed_tasks
+)
+from auth import get_current_user
 router = APIRouter()
 
 
+# ---------------- CREATE TASK ----------------
+
 @router.post("/")
-def create_task():
-    return {"message": "create task"}
+def add_task(
+        task: TaskCreate,
+        current_user: str = Depends(get_current_user)
+):
+
+    task_id = create_task(
+        task.title,
+        task.description,
+        task.priority,
+        task.due_date,
+        current_user
+    )
+
+    return {
+        "message": "Task created successfully",
+        "task_id": task_id
+    }
 
 
+# ---------------- GET ALL TASKS ----------------
 @router.get("/")
-def get_tasks():
-    return {"message": "all tasks"}
+def all_tasks(
+        status: str = None,
+        priority: str = None,
+        current_user: str = Depends(get_current_user)
+):
+    return get_all_tasks(current_user, status, priority)
+# ---------------- TASK TITLES ----------------
 
+@router.get("/titles")
+def task_titles(
+        current_user: str = Depends(get_current_user)
+):
 
-@router.get("/{task_id}")
-def get_task(task_id: int):
-    return {"task_id": task_id}
+    return get_task_titles(current_user)
 
-
-@router.put("/{task_id}")
-def update_task(task_id: int):
-    return {"task_id": task_id}
-
-
-@router.patch("/{task_id}/status")
-def update_status(task_id: int):
-    return {"task_id": task_id}
-
-
-@router.delete("/{task_id}")
-def delete_task(task_id: int):
-    return {"task_id": task_id}
-
+# ---------------- SUMMARY ----------------
 
 @router.get("/summary")
-def summary():
-    return {"summary": "task summary"}
+def task_summary(
+        current_user: str = Depends(get_current_user)
+):
+
+    return get_summary(current_user)
+
+@router.get("/dashboard")
+def dashboard(
+        current_user: str = Depends(get_current_user)
+):
+
+    return {
+        "total_tasks": get_total_tasks(current_user),
+        "pending_tasks": get_pending_tasks(current_user),
+        "completed_tasks": get_completed_tasks(current_user)
+    }
+# ---------------- GET SINGLE TASK ----------------
+
+@router.get("/{task_id}")
+def get_single_task(
+        task_id: int,
+        current_user: str = Depends(get_current_user)
+):
+
+    task = get_task_by_id(task_id)
+
+    if not task:
+        raise HTTPException(
+            status_code=404,
+            detail="Task not found"
+        )
+
+    if task["owner_email"] != current_user:
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden"
+        )
+
+    return task
+
+
+# ---------------- UPDATE TASK ----------------
+
+@router.put("/{task_id}")
+def edit_task(
+        task_id: int,
+        updated_task: TaskUpdate,
+        current_user: str = Depends(get_current_user)
+):
+
+    task = get_task_by_id(task_id)
+
+    if not task:
+        raise HTTPException(
+            status_code=404,
+            detail="Task not found"
+        )
+
+    if task["owner_email"] != current_user:
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden"
+        )
+
+    update_task(
+        task_id,
+        updated_task.title,
+        updated_task.description,
+        updated_task.priority,
+        updated_task.status,
+        updated_task.due_date
+    )
+
+    return {
+        "message": "Task updated successfully"
+    }
+
+
+# ---------------- CHANGE STATUS ----------------
+
+@router.patch("/{task_id}/status")
+def change_status(
+        task_id: int,
+        task_status: TaskStatus,
+        current_user: str = Depends(get_current_user)
+):
+
+    task = get_task_by_id(task_id)
+
+    if not task:
+        raise HTTPException(
+            status_code=404,
+            detail="Task not found"
+        )
+
+    if task["owner_email"] != current_user:
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden"
+        )
+
+    update_task_status(
+        task_id,
+        task_status.status
+    )
+
+    return {
+        "message": "Status updated successfully"
+    }
+
+
+# ---------------- DELETE TASK ----------------
+
+@router.delete("/{task_id}")
+def remove_task(
+        task_id: int,
+        current_user: str = Depends(get_current_user)
+):
+
+    task = get_task_by_id(task_id)
+
+    if not task:
+        raise HTTPException(
+            status_code=404,
+            detail="Task not found"
+        )
+
+    if task["owner_email"] != current_user:
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden"
+        )
+
+    delete_task(task_id)
+
+    return {
+        "message": "Task deleted successfully"
+    }
